@@ -2,13 +2,18 @@ package com.project
 
 import android.app.Activity
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.location.Location
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.Handler
+import android.provider.Settings
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -18,16 +23,14 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
+import kotlin.math.pow
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 data class Place(val position: Location, val name: String, val description: String);
 
-//: GoogleMap.OnMarkerClickListener
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private lateinit var mMap: GoogleMap
     private lateinit var hospitalsLocalisation: List<Place>
@@ -91,7 +94,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
 
         mMap.uiSettings.isZoomControlsEnabled = true
-        //mMap.setOnMarkerClickListener(this)
+        mMap.setOnMarkerClickListener(this)
 
         fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
             return ContextCompat.getDrawable(context, vectorResId)?.run {
@@ -136,7 +139,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         fusedLocationClient.lastLocation.addOnSuccessListener(this) { location ->
             // Got last known location. In some rare situations this can be null.
-            // 3
             if (location != null) {
                 userLocalisation = location
                 val currentLatLng = LatLng(location.latitude, location.longitude)
@@ -145,10 +147,66 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-//    override fun onMarkerClick(p0: Marker?): Boolean {
-//        p0.title
-//        return true
-//    }
+    override fun onMarkerClick(p0: Marker?): Boolean {
+        AlertDialog.Builder(this)
+            .setMessage("What do you want to know?")
+            .setTitle("Hospital")
+            .setPositiveButton(
+                "Information",
+                DialogInterface.OnClickListener { _, _ ->
+
+                }
+            ).setNegativeButton(
+                "Route",
+                DialogInterface.OnClickListener { _, _ ->
+                    this.createRouteSounds(p0!!)
+                }
+            ).show()
+        return true
+    }
+
+    private fun createRouteSounds(p0: Marker) {
+        val from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
+        val to = p0.position
+
+        val baseDist = calcDistance(from, to)
+        val baseTime: Long = 1000 //ms
+        var time: Long = baseTime
+        fun repeat() {
+            Handler().postDelayed({
+                this.playSound()
+                val from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
+                val to = p0.position
+                val dist = calcDistance(from, to)
+                val percentDist = dist / baseDist
+                if (percentDist < 0.05) {
+                    AlertDialog.Builder(this)
+                        .setMessage("You have arrived!")
+                        .setTitle("Please strict to the health rules.")
+                        .setPositiveButton(
+                            "Close",
+                            DialogInterface.OnClickListener { _, _ ->
+
+                            }
+                        ).show()
+                } else {
+                    time = (baseTime * percentDist).toLong()
+                    repeat()
+                }
+            }, time)
+        }
+
+        repeat()
+    }
+
+    private fun calcDistance(a: LatLng, b: LatLng): Double {
+        return sqrt((a.latitude - b.latitude).pow(2) + (a.longitude - b.longitude).pow(2))
+    }
+
+    private fun playSound() {
+        val mediaPlayer = MediaPlayer.create(this, Settings.System.DEFAULT_ALARM_ALERT_URI)
+        mediaPlayer.start()
+    }
 
     private fun startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(
@@ -213,11 +271,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 startLocationUpdates()
             }
         }
-    }
-
-    private fun placeMarkerOnMap(location: LatLng) {
-        val markerOptions = MarkerOptions().position(location)
-        mMap.addMarker(markerOptions)
     }
 
     override fun onPause() {
