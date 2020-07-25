@@ -1,4 +1,4 @@
-package com.project
+package com.project.activities
 
 import android.app.Activity
 import android.content.Context
@@ -24,16 +24,18 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.project.HospitalManager
+import com.project.R
+import com.project.api.HospitalRestMapper
+import com.project.tasks.AddScoreTask
+import com.project.tasks.GetHospitalByIDTask
+import com.project.tasks.GetHospitalsTask
 import kotlin.math.pow
 import kotlin.math.sqrt
-import kotlin.random.Random
-
-data class Place(val position: Location, val name: String, val description: String);
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private lateinit var mMap: GoogleMap
-    private lateinit var hospitalsLocalisation: List<Place>
     private lateinit var userLocalisation: Location
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
@@ -60,25 +62,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 userLocalisation = p0.lastLocation
             }
         }
+        HospitalManager.addComment("Komentarz", "Ala", HospitalManager.SAMPLE_HOSPITAL_ID)
+
+        println(HospitalManager.downloadHospitalFullData(HospitalManager.SAMPLE_HOSPITAL_ID))
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        this.hospitalsLocalisation = this.createTestData()
 
         this.createLocationRequest()
-    }
-
-    private fun createTestData(): List<Place> {
-        val list = ArrayList<Place>()
-        val name = "TestName"
-        val description = "TestDescription"
-        for (i in 0..200) {
-            val location = Location("null")
-            location.latitude = Random.nextDouble(0.0, 360.0)
-            location.longitude = Random.nextDouble(0.0, 180.0)
-
-            list.add(Place(location, name, description))
-        }
-        return list
     }
 
     /**
@@ -106,10 +96,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             }
         }
 
-        val icon = bitmapDescriptorFromVector(this, R.drawable.ic_hospital_ico)
+        val icon = bitmapDescriptorFromVector(this,
+            R.drawable.ic_hospital_ico
+        )
         // add hospitals makers
-        for (pos in this.hospitalsLocalisation) {
-            val place = LatLng(pos.position.latitude, pos.position.longitude)
+        for (pos in HospitalManager.hospitals) {
+            val place = LatLng(pos.location.lat, pos.location.lng)
             //val icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
             mMap.addMarker(
                 MarkerOptions().position(place).title(pos.name).snippet(pos.description).icon(icon)
@@ -166,8 +158,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     private fun createRouteSounds(p0: Marker) {
-        val from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
-        val to = p0.position
+        var from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
+        var to = p0.position
 
         val baseDist = calcDistance(from, to)
         val baseTime: Long = 1000 //ms
@@ -175,8 +167,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         fun repeat() {
             Handler().postDelayed({
                 this.playSound()
-                val from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
-                val to = p0.position
+                from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
+                to = p0.position
                 val dist = calcDistance(from, to)
                 val percentDist = dist / baseDist
                 if (percentDist < 0.05) {
