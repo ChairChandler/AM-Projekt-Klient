@@ -1,34 +1,36 @@
 package com.project.models
 
-data class Hospital constructor (
-    val id : String,
+import java.io.Serializable
+
+data class Hospital constructor(
+    val id: String,
     val name: String,
     val description: String,
     val location: Position
-){
-    constructor(): this("", "", "", Position())
+) : Serializable {
+    constructor() : this("", "", "", Position())
 }
 
-data class HospitalListResponse (
+data class HospitalListResponse(
     val hospitals: List<Hospital>
-){
-    constructor(): this(emptyList())
+) : Serializable {
+    constructor() : this(emptyList())
 }
 
-data class HospitalFullData constructor (
+data class HospitalFullData constructor(
     val scores: List<Score>,
     val comments: List<Comment>,
-    val id : String,
+    val id: String,
     val name: String,
     val description: String,
     val location: Position
-){
-    constructor(): this(emptyList(), emptyList(), "", "", "", Position())
+) : Serializable {
+    constructor() : this(emptyList(), emptyList(), "", "", "", Position())
 }
 
-data class Position constructor (
+data class Position constructor(
     val lat: Double,
     val lng: Double
-){
-    constructor(): this(0.0, 0.0)
+) : Serializable {
+    constructor() : this(0.0, 0.0)
 }

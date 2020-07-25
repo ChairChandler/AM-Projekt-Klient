@@ -26,14 +26,13 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.project.HospitalManager
 import com.project.R
-import com.project.api.HospitalRestMapper
-import com.project.tasks.AddScoreTask
-import com.project.tasks.GetHospitalByIDTask
-import com.project.tasks.GetHospitalsTask
+import com.project.models.Hospital
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+
+    private val hospitalsPositionMap: HashMap<LatLng, Hospital> = HashMap()
 
     private lateinit var mMap: GoogleMap
     private lateinit var userLocalisation: Location
@@ -64,7 +63,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
         HospitalManager.addComment("Komentarz", "Ala", HospitalManager.SAMPLE_HOSPITAL_ID)
 
-        println(HospitalManager.downloadHospitalFullData(HospitalManager.SAMPLE_HOSPITAL_ID))
+        for (info in HospitalManager.downloadHospitalData()) {
+            HospitalManager.hospitals.add(info)
+        }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -96,15 +97,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             }
         }
 
-        val icon = bitmapDescriptorFromVector(this,
-            R.drawable.ic_hospital_ico
-        )
+        val icon = bitmapDescriptorFromVector(this, R.drawable.ic_hospital_ico)
+
         // add hospitals makers
-        for (pos in HospitalManager.hospitals) {
-            val place = LatLng(pos.location.lat, pos.location.lng)
+        for (hospital in HospitalManager.hospitals) {
+            val place = LatLng(hospital.location.lat, hospital.location.lng)
+            hospitalsPositionMap[place] = hospital
             //val icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
             mMap.addMarker(
-                MarkerOptions().position(place).title(pos.name).snippet(pos.description).icon(icon)
+                MarkerOptions().position(place).title(hospital.name).snippet(hospital.description)
+                    .icon(icon) // TODO: Opis poprawic
             )
         }
 
@@ -144,16 +146,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             .setMessage("What do you want to know?")
             .setTitle("Hospital")
             .setPositiveButton(
-                "Information",
-                DialogInterface.OnClickListener { _, _ ->
-
-                }
-            ).setNegativeButton(
-                "Route",
-                DialogInterface.OnClickListener { _, _ ->
-                    this.createRouteSounds(p0!!)
-                }
-            ).show()
+                "Information"
+            ) { _, _ ->
+                val intent = Intent(this, HospitalInfoActivity::class.java)
+                val selectedHospitalInfo = hospitalsPositionMap[p0?.position]
+                intent.putExtra("info", selectedHospitalInfo)
+                startActivity(intent)
+            }.setNegativeButton(
+                "Route"
+            ) { _, _ ->
+                this.createRouteSounds(p0!!)
+            }.show()
         return true
     }
 
