@@ -43,8 +43,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private lateinit var locationRequest: LocationRequest
     private var locationUpdateState = false
 
-    private val hospitalService = HospitalRestMapper()
-
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
@@ -64,27 +62,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 userLocalisation = p0.lastLocation
             }
         }
+        HospitalManager.addComment("Komentarz", "Ala", HospitalManager.SAMPLE_HOSPITAL_ID)
 
-        getHospital()
+        println(HospitalManager.downloadHospitalFullData(HospitalManager.SAMPLE_HOSPITAL_ID))
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        println( HospitalManager.hospitals)
-
         this.createLocationRequest()
-    }
-
-    private fun downloadHospitalData() {
-        //TODO nie działa, czekam na zmianę api
-        GetHospitalsTask().execute().get()
-    }
-
-    private fun getHospital(){
-        GetHospitalByIDTask().execute("0f08affb-214b-42b9-98aa-f8d070af156b")
-    }
-
-    private fun addScore(score: Int, userName: String, hospitalId: String){
-        AddScoreTask().execute(score.toString(), userName, hospitalId).get()
     }
 
     /**

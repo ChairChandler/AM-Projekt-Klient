@@ -26,11 +26,11 @@ data class Id constructor (
 }
 
 data class ScoreRequest(
-    val id: String,
+    val user: String,
     val score: Int
 )
 
 data class CommentRequest(
-    val id: String,
+    val user: String,
     val comment: String
 )

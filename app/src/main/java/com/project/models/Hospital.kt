@@ -5,13 +5,17 @@ data class Hospital constructor (
     val name: String,
     val description: String,
     val location: Position
-)
+){
+    constructor(): this("", "", "", Position())
+}
 
 data class HospitalListResponse (
     val hospitals: List<Hospital>
-)
+){
+    constructor(): this(emptyList())
+}
 
-data class HospitalFullInfo constructor (
+data class HospitalFullData constructor (
     val scores: List<Score>,
     val comments: List<Comment>,
     val id : String,

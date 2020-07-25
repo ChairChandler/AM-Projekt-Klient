@@ -1,7 +1,6 @@
 package com.project.api
 
 import com.project.models.*
-import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.web.client.RestTemplate
 import java.net.URI
@@ -16,28 +15,32 @@ class HospitalRestMapper() {
         return restTemplate.getForObject(url, HospitalListResponse::class.java)
     }
 
-    fun getHospital(id: String): HospitalFullInfo{
+    fun getHospital(id: String): HospitalFullData{
         val url = URI("$SERVER/api/hospital/$id")
         restTemplate.messageConverters.add(MappingJackson2HttpMessageConverter())
-        return restTemplate.getForObject(url, HospitalFullInfo::class.java)
+        return restTemplate.getForObject(url, HospitalFullData::class.java)
     }
 
-    fun addScore(score: Int, userName: String, hospitalId: String){
+    fun addScore(score: Int, userName: String, hospitalId: String): Boolean {
         val url = URI("$SERVER/api/hospital/$hospitalId/score")
-        restTemplate.postForObject(
+        restTemplate.messageConverters.add(MappingJackson2HttpMessageConverter())
+        val response = restTemplate.postForObject(
             url,
             ScoreRequest(userName, score),
-            ResponseEntity::class.java
+            HospitalFullData::class.java
         )
+        return response != null
     }
 
-    fun addComment(comment: String, userName: String, hospitalId: String){
-        val url = URI("$SERVER/api/hospital/$hospitalId/score")
-        restTemplate.postForObject(
+    fun addComment(comment: String, userName: String, hospitalId: String): Boolean {
+        val url = URI("$SERVER/api/hospital/$hospitalId/comment")
+        restTemplate.messageConverters.add(MappingJackson2HttpMessageConverter())
+        val response = restTemplate.postForObject(
             url,
             CommentRequest(userName, comment),
-            ResponseEntity::class.java
+            HospitalFullData::class.java
         )
+        return response != null
     }
 
     companion object{

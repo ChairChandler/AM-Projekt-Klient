@@ -10,7 +10,6 @@ class GetHospitalsTask() : AsyncTask<String, Void, List<Hospital>>() {
     private val hospitalService = HospitalRestMapper()
 
     override fun doInBackground(vararg p0: String?): List<Hospital> {
-         HospitalManager.hospitals.addAll(hospitalService.getHospitals().hospitals)
-        return HospitalManager.hospitals
+        return hospitalService.getHospitals().hospitals
     }
 }
