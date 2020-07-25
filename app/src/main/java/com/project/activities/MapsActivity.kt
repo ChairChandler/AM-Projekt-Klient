@@ -26,10 +26,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.project.HospitalManager
 import com.project.R
-import com.project.api.HospitalRestMapper
-import com.project.tasks.AddScoreTask
-import com.project.tasks.GetHospitalByIDTask
-import com.project.tasks.GetHospitalsTask
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -52,6 +48,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
+        //TODO w ten sposób przełączać na dodawanie komentarza
+        /*val i = Intent(this, AddingScoreActivity::class.java)
+        val hospital = HospitalManager.downloadHospitalFullData(HospitalManager.SAMPLE_HOSPITAL_ID)
+        i.putExtra("name", hospital.name)
+        i.putExtra("id", hospital.id)
+        startActivity(i)*/
+
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -62,9 +66,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 userLocalisation = p0.lastLocation
             }
         }
-        HospitalManager.addComment("Komentarz", "Ala", HospitalManager.SAMPLE_HOSPITAL_ID)
-
-        println(HospitalManager.downloadHospitalFullData(HospitalManager.SAMPLE_HOSPITAL_ID))
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 

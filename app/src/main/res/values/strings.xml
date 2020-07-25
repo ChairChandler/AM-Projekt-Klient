@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">Projekt</string>
     <string name="title_activity_maps">Map</string>
+    <string name="score">Oceń szpital:</string>
+    <string name="comment">Uzasadnij swoją ocenę dodając komentarz.</string>
+    <string name="name">Imię</string>
+    <string name="Send">Wyślij</string>
 </resources>
