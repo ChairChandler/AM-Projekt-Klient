@@ -21,3 +21,12 @@ data class ScoreRequest(
     val score: Int,
     val comment: String
 )
+
+data class Comment constructor (
+    val hospitalId: String,
+    val user : String,
+    val comment: String,
+    val dateUTC: String
+) {
+    constructor() : this( "", "", "", "")
+}

@@ -5,6 +5,7 @@ import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import com.project.HospitalManager
 import com.project.R
+import com.project.models.Comment
 import com.project.models.Hospital
 import com.project.models.HospitalFullData
 import com.project.views.CommentsArrayAdapter
@@ -25,7 +26,7 @@ class HospitalInfoActivity : AppCompatActivity() {
 
     private fun showComments() {
         listView = findViewById(R.id.comments)
-        val adapter = CommentsArrayAdapter(this, hospital.comments)
+        val adapter = CommentsArrayAdapter(this, hospital.scores.map { Comment(it.id.hospitalId, it.id.user, it.comment, it.dateUTC) })
         listView.adapter = adapter
     }
 }
