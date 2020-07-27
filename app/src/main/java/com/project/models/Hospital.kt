@@ -17,13 +17,12 @@ data class HospitalListResponse (
 
 data class HospitalFullData constructor (
     val scores: List<Score>,
-    val comments: List<Comment>,
     val id : String,
     val name: String,
     val description: String,
     val location: Position
 ){
-    constructor(): this(emptyList(), emptyList(), "", "", "", Position())
+    constructor(): this( emptyList(), "", "", "", Position())
 }
 
 data class Position constructor (

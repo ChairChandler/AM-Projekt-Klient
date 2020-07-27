@@ -50,11 +50,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
 
         //TODO w ten sposób przełączać na dodawanie komentarza
-        /*val i = Intent(this, AddingScoreActivity::class.java)
+        val i = Intent(this, AddingScoreActivity::class.java)
         val hospital = HospitalManager.downloadHospitalFullData(HospitalManager.SAMPLE_HOSPITAL_ID)
         i.putExtra("name", hospital.name)
         i.putExtra("id", hospital.id)
-        startActivity(i)*/
+        startActivity(i)
 
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment

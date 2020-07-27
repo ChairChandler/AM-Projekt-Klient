@@ -23,15 +23,9 @@ class AddingScoreActivity : AppCompatActivity() {
 
         send.setOnClickListener {
             if (ratingBar.rating.toInt() != 0 && userNameInput.text.isNotEmpty()) {
-                if (commentInput.text.isNotEmpty()) {
-                    HospitalManager.addComment(
-                        commentInput.text.toString(),
-                        userNameInput.text.toString(),
-                        hospitalId!!
-                    )
-                }
                 HospitalManager.addScore(
                     ratingBar.rating.toInt(),
+                    commentInput.text.toString(),
                     userNameInput.text.toString(),
                     hospitalId!!
                 )

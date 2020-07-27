@@ -21,23 +21,12 @@ class HospitalRestMapper() {
         return restTemplate.getForObject(url, HospitalFullData::class.java)
     }
 
-    fun addScore(score: Int, userName: String, hospitalId: String): Boolean {
+    fun addScore(score: Int, comment:String, userName: String, hospitalId: String): Boolean {
         val url = URI("$SERVER/api/hospital/$hospitalId/score")
         restTemplate.messageConverters.add(MappingJackson2HttpMessageConverter())
         val response = restTemplate.postForObject(
             url,
-            ScoreRequest(userName, score),
-            HospitalFullData::class.java
-        )
-        return response != null
-    }
-
-    fun addComment(comment: String, userName: String, hospitalId: String): Boolean {
-        val url = URI("$SERVER/api/hospital/$hospitalId/comment")
-        restTemplate.messageConverters.add(MappingJackson2HttpMessageConverter())
-        val response = restTemplate.postForObject(
-            url,
-            CommentRequest(userName, comment),
+            ScoreRequest(userName, score, comment),
             HospitalFullData::class.java
         )
         return response != null
