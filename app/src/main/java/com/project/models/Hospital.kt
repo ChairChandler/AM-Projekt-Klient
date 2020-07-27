@@ -19,13 +19,12 @@ data class HospitalListResponse(
 
 data class HospitalFullData constructor(
     val scores: List<Score>,
-    val comments: List<Comment>,
-    val id: String,
+    val id : String,
     val name: String,
     val description: String,
     val location: Position
-) : Serializable {
-    constructor() : this(emptyList(), emptyList(), "", "", "", Position())
+): Serializable {
+    constructor(): this( emptyList(), "", "", "", Position())
 }
 
 data class Position constructor(

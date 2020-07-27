@@ -51,6 +51,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
+        //TODO w ten sposób przełączać na dodawanie komentarza
+        val i = Intent(this, AddingScoreActivity::class.java)
+        val hospital = HospitalManager.downloadHospitalFullData(HospitalManager.SAMPLE_HOSPITAL_ID)
+        i.putExtra("name", hospital.name)
+        i.putExtra("id", hospital.id)
+        startActivity(i)
+
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -61,6 +69,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 userLocalisation = p0.lastLocation
             }
         }
+
         HospitalManager.addComment("Komentarz", "Ala", HospitalManager.SAMPLE_HOSPITAL_ID)
 
         for (info in HospitalManager.downloadHospitalData()) {
