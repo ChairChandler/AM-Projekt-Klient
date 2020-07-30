@@ -2,12 +2,12 @@ package com.project.activities
 
 import android.app.Activity
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.location.Location
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -17,6 +17,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -24,14 +28,17 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.maps.android.PolyUtil
 import com.project.HospitalManager
 import com.project.R
 import com.project.models.Hospital
+import org.json.JSONObject
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
+    private val apiKey: String = R.string.google_maps_key.toString()
     private val hospitalsPositionMap: HashMap<LatLng, Hospital> = HashMap()
 
     private lateinit var mMap: GoogleMap
@@ -61,7 +68,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 userLocalisation = p0.lastLocation
             }
         }
-        HospitalManager.addComment("Komentarz", "Ala", HospitalManager.SAMPLE_HOSPITAL_ID)
+        //HospitalManager.addComment("Komentarz", "Ala", HospitalManager.SAMPLE_HOSPITAL_ID)
 
         for (info in HospitalManager.downloadHospitalData()) {
             HospitalManager.hospitals.add(info)
@@ -104,10 +111,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             val place = LatLng(hospital.location.lat, hospital.location.lng)
             hospitalsPositionMap[place] = hospital
             //val icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
-            mMap.addMarker(
-                MarkerOptions().position(place).title(hospital.name).snippet(hospital.description)
-                    .icon(icon) // TODO: Opis poprawic
-            )
+            mMap.addMarker(MarkerOptions().position(place).icon(icon))
         }
 
         this.setUpMap()
@@ -142,22 +146,56 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     override fun onMarkerClick(p0: Marker?): Boolean {
+        val selectedHospitalInfo = hospitalsPositionMap[p0?.position]
+
         AlertDialog.Builder(this)
-            .setMessage("What do you want to know?")
-            .setTitle("Hospital")
+            .setMessage("${selectedHospitalInfo?.description}\n\nWhat do you want to know?")
+            .setTitle(selectedHospitalInfo?.name)
             .setPositiveButton(
                 "Information"
             ) { _, _ ->
                 val intent = Intent(this, HospitalInfoActivity::class.java)
-                val selectedHospitalInfo = hospitalsPositionMap[p0?.position]
+
                 intent.putExtra("info", selectedHospitalInfo)
                 startActivity(intent)
             }.setNegativeButton(
                 "Route"
             ) { _, _ ->
-                this.createRouteSounds(p0!!)
+                var from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
+                var to = p0!!.position
+                this.createRoute(from, to)
             }.show()
         return true
+    }
+
+    private fun createRoute(from: LatLng, to: LatLng): Boolean {
+        val path: MutableList<List<LatLng>> = ArrayList()
+        val urlDirections =
+            "https://maps.googleapis.com/maps/api/directions/json?origin=${from.latitude},${from.longitude}&destination=${to.latitude},${to.longitude}&key=${apiKey}"
+        val directionsRequest = object :
+            StringRequest(Request.Method.GET, urlDirections, Response.Listener<String> { response ->
+                val jsonResponse = JSONObject(response)
+                // Get routes
+                val routes = jsonResponse.getJSONArray("routes")
+                val legs = routes.getJSONObject(0).getJSONArray("legs")
+                val steps = legs.getJSONObject(0).getJSONArray("steps")
+                for (i in 0 until steps.length()) {
+                    val points =
+                        steps.getJSONObject(i).getJSONObject("polyline").getString("points")
+                    path.add(PolyUtil.decode(points))
+                }
+                for (i in 0 until path.size) {
+                    mMap!!.addPolyline(PolylineOptions().addAll(path[i]).color(Color.RED))
+                }
+            }, Response.ErrorListener { _ ->
+            }) {}
+        val requestQueue = Volley.newRequestQueue(this)
+        return try {
+            requestQueue.add(directionsRequest)
+            true
+        } catch (exc: IndexOutOfBoundsException) {
+            false
+        }
     }
 
     private fun createRouteSounds(p0: Marker) {
@@ -165,42 +203,44 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         var to = p0.position
 
         val baseDist = calcDistance(from, to)
-        val baseTime: Long = 1000 //ms
+        val baseTime: Long = 3000 //ms
         var time: Long = baseTime
-        fun repeat() {
+
+        fun repeat(first: Boolean = false) {
+
             Handler().postDelayed({
-                this.playSound()
                 from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
                 to = p0.position
                 val dist = calcDistance(from, to)
                 val percentDist = dist / baseDist
                 if (percentDist < 0.05) {
                     AlertDialog.Builder(this)
-                        .setMessage("You have arrived!")
-                        .setTitle("Please strict to the health rules.")
-                        .setPositiveButton(
-                            "Close",
-                            DialogInterface.OnClickListener { _, _ ->
+                        .setTitle("You have arrived!")
+                        .setMessage("Please strict to the health rules.")
+                        .setPositiveButton("Close") { _, _ ->
 
-                            }
-                        ).show()
+                        }.show()
                 } else {
                     time = (baseTime * percentDist).toLong()
+                    this.playSound(time)
                     repeat()
                 }
-            }, time)
+            }, if (first) 0 else time)
         }
 
-        repeat()
+        repeat(true)
     }
 
     private fun calcDistance(a: LatLng, b: LatLng): Double {
         return sqrt((a.latitude - b.latitude).pow(2) + (a.longitude - b.longitude).pow(2))
     }
 
-    private fun playSound() {
+    private fun playSound(time: Long) {
         val mediaPlayer = MediaPlayer.create(this, Settings.System.DEFAULT_ALARM_ALERT_URI)
         mediaPlayer.start()
+        Handler().postDelayed({
+            mediaPlayer.stop()
+        }, time)
     }
 
     private fun startLocationUpdates() {
