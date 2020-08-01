@@ -9,10 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.location.Location
-import android.media.MediaPlayer
 import android.os.Bundle
-import android.os.Handler
-import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -28,10 +25,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.google.maps.android.PolyUtil
 import com.project.HospitalManager
 import com.project.R
 import com.project.models.Hospital
+import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -162,85 +159,53 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 "Route"
             ) { _, _ ->
                 var from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
-                var to = p0!!.position
+                //var from = LatLng(p0!!.position.latitude - 20, p0!!.position.longitude);
+                //var to = p0!!.position
+                var to = LatLng(37.773972, -120.431297)
                 this.createRoute(from, to)
             }.show()
         return true
     }
 
-    private fun createRoute(from: LatLng, to: LatLng): Boolean {
+    private fun createRoute(from: LatLng, to: LatLng) {
         val path: MutableList<List<LatLng>> = ArrayList()
         val urlDirections =
-            "https://maps.googleapis.com/maps/api/directions/json?origin=${from.latitude},${from.longitude}&destination=${to.latitude},${to.longitude}&key=${apiKey}"
+            "http://www.yournavigation.org/api/1.0/gosmore.php?flat=${from.latitude}&flon=${longitudeArgCorrection(
+                from.longitude
+            )}&tlat=${to.latitude}&tlon=${longitudeArgCorrection(to.longitude)}&format=geojson"
+        println(urlDirections)
         val directionsRequest = object :
             StringRequest(Request.Method.GET, urlDirections, Response.Listener<String> { response ->
                 val jsonResponse = JSONObject(response)
                 // Get routes
-                val routes = jsonResponse.getJSONArray("routes")
-                val legs = routes.getJSONObject(0).getJSONArray("legs")
-                val steps = legs.getJSONObject(0).getJSONArray("steps")
-                for (i in 0 until steps.length()) {
-                    val points =
-                        steps.getJSONObject(i).getJSONObject("polyline").getString("points")
-                    path.add(PolyUtil.decode(points))
+                val routes = jsonResponse.getJSONArray("coordinates")
+                for (i in 0 until routes.length()) {
+                    val latLngArray = routes[i] as JSONArray
+                    val latLng = LatLng(latLngArray.get(0) as Double, latLngArray.get(1) as Double)
+                    path.add(listOf(latLng))
                 }
                 for (i in 0 until path.size) {
                     mMap!!.addPolyline(PolylineOptions().addAll(path[i]).color(Color.RED))
                 }
+                mMap!!.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        LatLng(
+                            path[0][0] as Double,
+                            path[0][1] as Double
+                        ), 12f
+                    )
+                )
             }, Response.ErrorListener { _ ->
             }) {}
         val requestQueue = Volley.newRequestQueue(this)
-        return try {
-            requestQueue.add(directionsRequest)
-            true
-        } catch (exc: IndexOutOfBoundsException) {
-            false
-        }
+        requestQueue.add(directionsRequest)
     }
 
-    private fun createRouteSounds(p0: Marker) {
-        var from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
-        var to = p0.position
-
-        val baseDist = calcDistance(from, to)
-        val baseTime: Long = 3000 //ms
-        var time: Long = baseTime
-
-        fun repeat(first: Boolean = false) {
-
-            Handler().postDelayed({
-                from = LatLng(userLocalisation.latitude, userLocalisation.longitude)
-                to = p0.position
-                val dist = calcDistance(from, to)
-                val percentDist = dist / baseDist
-                if (percentDist < 0.05) {
-                    AlertDialog.Builder(this)
-                        .setTitle("You have arrived!")
-                        .setMessage("Please strict to the health rules.")
-                        .setPositiveButton("Close") { _, _ ->
-
-                        }.show()
-                } else {
-                    time = (baseTime * percentDist).toLong()
-                    this.playSound(time)
-                    repeat()
-                }
-            }, if (first) 0 else time)
-        }
-
-        repeat(true)
-    }
+    private fun longitudeArgCorrection(longitude: Double): String =
+        if (longitude < 0) "\\\\${longitude}" else longitude.toString()
 
     private fun calcDistance(a: LatLng, b: LatLng): Double {
         return sqrt((a.latitude - b.latitude).pow(2) + (a.longitude - b.longitude).pow(2))
-    }
-
-    private fun playSound(time: Long) {
-        val mediaPlayer = MediaPlayer.create(this, Settings.System.DEFAULT_ALARM_ALERT_URI)
-        mediaPlayer.start()
-        Handler().postDelayed({
-            mediaPlayer.stop()
-        }, time)
     }
 
     private fun startLocationUpdates() {
