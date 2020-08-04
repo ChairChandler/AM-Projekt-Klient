@@ -16,9 +16,9 @@
 
         <TextView
             android:id="@+id/date"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAlignment="textEnd" />
+            android:layout_width="wrap_content"
+            android:paddingLeft="16dp" />
 
     </LinearLayout>
 
@@ -30,8 +30,7 @@
             android:id="@+id/score"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:isIndicator="true"
-            android:scaleY="0.3" />
+            android:isIndicator="true" />
 
     </LinearLayout>
 
