@@ -9,6 +9,6 @@ class AddScoreTask() : AsyncTask<String, Void, Boolean>() {
 
 
     override fun doInBackground(vararg p0: String?): Boolean {
-        return hospitalService.addScore(p0[0]!!.toInt(), p0[1]!!, p0[2]!!)
+        return hospitalService.addScore(p0[0]!!.toInt(), p0[1]!!, p0[2]!!, p0[3]!!)
     }
 }
