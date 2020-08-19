@@ -25,8 +25,9 @@ data class ScoreRequest(
 data class Comment constructor (
     val hospitalId: String,
     val user : String,
+    val score: Int,
     val comment: String,
     val dateUTC: String
 ) {
-    constructor() : this( "", "", "", "")
+    constructor() : this( "", "", 0, "", "")
 }

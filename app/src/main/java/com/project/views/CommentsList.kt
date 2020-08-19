@@ -19,7 +19,7 @@ class CommentsArrayAdapter(context: Context, contacts: List<Comment>) :
 
         rootView.date.text = this.parseDate(comment.dateUTC)
         rootView.user.text = comment.user
-        rootView.score.numStars = 5
+        rootView.score.rating = comment.score.toFloat()
         rootView.description.text = comment.comment
 
         return rootView

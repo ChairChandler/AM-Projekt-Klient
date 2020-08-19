@@ -26,7 +26,7 @@ class HospitalInfoActivity : AppCompatActivity() {
 
     private fun showComments() {
         listView = findViewById(R.id.comments)
-        val adapter = CommentsArrayAdapter(this, hospital.scores.map { Comment(it.id.hospitalId, it.id.user, it.comment, it.dateUTC) })
+        val adapter = CommentsArrayAdapter(this, hospital.scores.map { Comment(it.id.hospitalId, it.id.user, it.score, it.comment, it.dateUTC) })
         listView.adapter = adapter
     }
 }
